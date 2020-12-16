@@ -1,4 +1,2 @@
 #!/bin/bash
-cd 
-cd /home/none/code/WE_Usage
-python we.py
+python  /home/none/Desktop/testWE/WE-Internet-Quota-reminder/we.py
