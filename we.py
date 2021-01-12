@@ -1,24 +1,22 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
-from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+import os
 import time
-import gi
-gi.require_version('Notify', '0.7')
-from gi.repository import Notify
+
+
+start = time.time()
 
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
+#chrome_options.add_argument('--headless')
+#chrome_options.add_argument('--no-sandbox')
+#chrome_options.add_argument('--disable-dev-shm-usage')
 
-driver = webdriver.Chrome(chrome_options=chrome_options)
-
-Notify.init('New')
+driver = webdriver.Chrome(executable_path='chromedriver', options=chrome_options)
 
 #The required phoneNumber and Password to sign in
-MobileNumber = ""
-Password = ""
+MobileNumber = "0483667574"
+Password = "Ahmedosmanedu1"
 
 #To Run chrome in the background
 # options = Options()
@@ -31,22 +29,11 @@ def sendPassword(password):
 	for i in password:
 		key.send_keys(i)
 
+#tries to connect then saves the login things
+def save_login():
+	username = driver.find_element_by_id('MobileNumberID')
+	first_flag = False
 
-#Open file to save the data in 
-fh = open('WE.txt', 'a')
-
-#The xPaths 
-#//*[@id="content-block"]/div/app-usage/div/div[2]/div[1]/ngx-carousel/div[1]/div/div[1]/ngx-item/div[3]/div
-#//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[1]
-#//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[2]
-
-#signin page
-driver.get('https://my.te.eg/#/home/signin/UnAuthorized')
-
-#getting the username input field
-username = driver.find_element_by_id('MobileNumberID')
-#sending the phonenumber (no need to send char by char idk why it works here)
-try :
 	username.send_keys(MobileNumber)
 	#time.sleep(5)
 
@@ -57,49 +44,45 @@ try :
 	#clicking the signIn button
 	driver.find_element_by_id('singInBtn').click()
 	#Waiting for the page to reload 
-	time.sleep(8)
+	time.sleep(2)
+	try: 
+		
+		moreInfo = driver.find_element_by_xpath('//*[@id="content-block"]/div/account-overview/div[2]/div/div/button')
+		print(moreInfo.text)
+	except:
+		first_flag = True
 
-	#For getting all the info
-	moreInfo = driver.find_element_by_xpath('//button[text()="عرض التفاصيل"]')
-	
-except :
-	key = driver.find_element_by_id('PasswordID')
-	key.clear()
-	sendPassword(Password)
-	time.sleep(5)
+	if first_flag:
+		key = driver.find_element_by_id('PasswordID')
+		key.clear()
+		sendPassword(Password)
+		driver.find_element_by_id('singInBtn').click()
+		time.sleep(3)
 
-	#clicking the signIn button
-	driver.find_element_by_id('singInBtn').click()
-	moreInfo = driver.find_element_by_xpath('//button[text()="عرض التفاصيل"]')
+#Open file to save the data in 
+fh = open('WE.txt', 'a')
 
-moreInfo.click()
-time.sleep(8)
 
-#grabbing all the info needed
-days = driver.find_element_by_xpath('//*[@id="content-block"]/div/app-usage/div/div[2]/div[1]/ngx-carousel/div[1]/div/div[1]/ngx-item/div[3]/div')
-quota = driver.find_element_by_xpath('//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[1]')
-availableQuota = driver.find_element_by_xpath('//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[2]')
+#signin page
+driver.get('https://my.te.eg/#/home/signin/UnAuthorized')
+save_login()
 
-remainingDays = days.text.strip('يوم')
-consumedQuota = quota.text
-remainingQuota = availableQuota.text.strip('المتبقي')
+#driver.get('https://my.te.eg/#/offering/usage')
+time.sleep(2)
+moreInfo = driver.find_element_by_xpath('/html/body/ecare-app/div/main/div/div/div/account-overview/div[2]/div/donut-chart/div/div/div/div/div/circle-progress')
 
-info = f'You consumed {consumedQuota} Gb, remaining{remainingQuota} Gb and there are still {remainingDays} days! \n'
+remaining_all = moreInfo.text.strip(" جيجا ")
+final_data = f"'You consumed : {140 - float(remaining_all)}gb , Remaining : {remaining_all} gb'"
+print(final_data)
 
+
+os.system(f"notify-send -u critical -t 10000 " + final_data)
 #wrinting to the file
-fh.write(info)
+fh.write(final_data)
 
-#creating new notification
-notification_msg = Notify.Notification.new('WE-Data', info)
-
-#setting urgency '2' means that it will always appear till user close it
-notification_msg.set_urgency(2)
-
-#showing the notification
-notification_msg.show()
-
-#print(finfo)
 
 #closing the file and quitting the browser
 fh.close()
 driver.quit()
+end = time.time()
+print(f"This took : {end- start}s")
