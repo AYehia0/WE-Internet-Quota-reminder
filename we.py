@@ -17,8 +17,9 @@ driver = webdriver.Chrome(executable_path='chromedriver', options=chrome_options
 
 #The required phoneNumber and Password to sign in
 MobileNumber = account_configs.MobileNumber
-Password = account_configs.MobileNumber
+Password = account_configs.Password
 
+print(Password)
 
 #To send password char by char to avoid char dropping
 def sendPassword(password):
