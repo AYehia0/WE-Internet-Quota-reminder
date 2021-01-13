@@ -14,15 +14,16 @@ from selenium.webdriver.support import expected_conditions as EC
 start = time.time()
 
 chrome_options = webdriver.ChromeOptions()
-chrome_options.add_argument('--headless')
-chrome_options.add_argument('--no-sandbox')
-chrome_options.add_argument('--disable-dev-shm-usage')
+#chrome_options.add_argument('--headless')
+#chrome_options.add_argument('--no-sandbox')
+#chrome_options.add_argument('--disable-dev-shm-usage')
 
 driver = webdriver.Chrome(executable_path='chromedriver', options=chrome_options)
 
 
 #init wait time 
-sec = 4
+sec = 5 
+home_page = 'https://my.te.eg/#/offering/usage'
 time_to_wait = WebDriverWait(driver, sec)
 
 
@@ -34,6 +35,7 @@ Password = account_configs.Password
 consumed_xpath = '//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[1]'
 remaining_days_xpath = '//*[@id="content-block"]/div/app-usage/div/div[2]/div[1]/ngx-carousel/div[1]/div/div[1]/ngx-item/div[3]/div'
 moreInfo_xpath = '//*[@id="content-block"]/div/account-overview/div[2]/div/div/button'
+remain_q_xpath = '//*[@id="tab7"]/donut-chart/div/div/div/div[2]/div/div/div/div/div/div/span[2]'
 password_id = 'PasswordID'
 mobile_id = 'MobileNumberID'
 signIn_id = 'singInBtn'
@@ -72,42 +74,36 @@ def save_login():
 		key.clear()
 		sendPassword(Password)
 		driver.find_element_by_id(signIn_id).click()
-		#time.sleep(3)
+		time.sleep(3)
 
 #Open file to save the data in 
-fh = open('WE.txt', 'a')
+fh = open('data.txt', 'a')
 
 
 #signin page
-driver.get('https://my.te.eg/#/home/signin/UnAuthorized')
+driver.get(home_page)
 save_login()
 
 #getting to the usage page, where all the data exists (shortcut)
-driver.get('https://my.te.eg/#/offering/usage')
+driver.get(home_page)
+#time.sleep(3)
 
-
-#moreInfo = driver.find_element_by_xpath('/html/body/ecare-app/div/main/div/div/div/account-overview/div[2]/div/donut-chart/div/div/div/div/div/circle-progress')
+#moreInfo = driver.find_element_by_xpath('//*[@id="content-block"]/div/account-overview/div[2]/div/div/button').click()
 #consumed = driver.find_element_by_xpath(counsumed_xpath)
-consumed = time_to_wait.until(EC.visibility_of_element_located((By.XPATH, consumed_xpath)))
+consumed = WebDriverWait(driver,5).until(EC.visibility_of_element_located((By.XPATH, consumed_xpath)))
+remained = time_to_wait.until(EC.presence_of_element_located((By.XPATH, remain_q_xpath)))
 days = time_to_wait.until(EC.visibility_of_element_located((By.XPATH, remaining_days_xpath)))
-
-#days = driver.find_element_by_xpath(remaining_days_xpath)
 
 rem_days = days.text.strip('يوم')
 
-final_data = f"'You consumed : {consumed.text}gb , Remaining : {140 - float(consumed.text)}gb , Remaining Days : {rem_days}'\n"
-print(final_data)
+final_data = f"'You consumed : {consumed.text}gb , Remaining : {remained.text.strip('المتبقي')}gb , Remaining Days : {rem_days}'"
 
 #sending notification 
 os.system(f"notify-send -u critical -t 10000 " + final_data)
 
 
 #wrinting to the file
-fh.write(final_data)
+os.system("echo " + final_data + " >> ~/Desktop/testWE/WE-Internet-Quota-reminder/data.txt") 
 
-
-#closing the file and quitting the browser
-fh.close()
+#quitting the browser
 driver.quit()
-#end = time.time()
-#print(f"This took : {end- start}s")
